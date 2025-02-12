@@ -7,3 +7,10 @@ software developer who want to work with data scientist and kinda lazy to make t
 
 also with dictionary format, i hope who seeing this project can at least make some sense on how data
 scientist pipeline works, and can upgrade the project even further for their projects
+
+how to use this project :
+1. just make model.py object into your programs
+2. initiate which database you want to use : host, databasename, user, and password to connect into database
+3. add your data into database, just use dictionary format and your data automaticaly uploaded to database
+
+for now, i just made create function from CRUD schema, for the future i will make it to serve CRUD format
