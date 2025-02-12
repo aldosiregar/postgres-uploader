@@ -1,10 +1,9 @@
-import pandas as pd
+data = {"first" : [10,20,30], "second" : [40,50,60], "third" : [70, 80, 90]}
 
-temp = {"first" : [1,2,3], "second" : [2,3,4], "third" : [4, 5, 6]}
+datatoprint = """first column : %s, second column : %s, third column : %s"""
 
-df = pd.DataFrame(temp)
+keysindata = list(data.keys())
+size = range(3)
 
-temp2 = range(len(list(temp.keys())))
-
-for i in temp2:
-    print(i)
+for rows in size:
+    print(datatoprint % tuple([data[keysindata[columns]][rows] for columns in range(len(keysindata))]))
