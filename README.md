@@ -14,3 +14,7 @@ how to use this project :
 3. add your data into database, just use dictionary format and your data automaticaly uploaded to database
 
 for now, i just made create function from CRUD schema, for the future i will make it to serve CRUD format
+
+changelog :
+i just realize i made few mistake and didnt know how to make documentation before, so if anyone already clone earlier version 
+because i made (kinda) huge change
