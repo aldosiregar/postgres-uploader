@@ -18,3 +18,6 @@ for now, i just made create function from CRUD schema, for the future i will mak
 changelog :
 i just realize i made few mistake and didnt know how to make documentation before, so if anyone already clone earlier version 
 because i made (kinda) huge change
+
+changelog 2 :
+another minor mistake, so now i update the method i used

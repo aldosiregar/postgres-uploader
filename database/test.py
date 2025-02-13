@@ -1,9 +1,11 @@
-data = {"first" : [10,20,30], "second" : [40,50,60], "third" : [70, 80, 90]}
+import pandas as pd
 
-datatoprint = """first column : %s, second column : %s, third column : %s"""
+data = {"first" : [10, 20, 30], "second" : [40, 50, 60], "third" : [70, 80, 90]}
 
-keysindata = list(data.keys())
-size = range(3)
+dataTypes = tuple([type(i) for i in data.values()])
 
-for rows in size:
-    print(datatoprint % tuple([data[keysindata[columns]][rows] for columns in range(len(keysindata))]))
+print([tuple([data[columns][rows] for columns in data]) for rows in range(3)])
+
+for columns in data:
+    for rows in range(3):
+        data[columns][rows]

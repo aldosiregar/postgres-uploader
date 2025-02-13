@@ -17,9 +17,6 @@ class connectionToDataBase():
     databaseConnection : connection.dbConnection()
         object dari kelas dbConnection
 
-    cur : psycopg2.connect().cursor()
-        cursor yang akan digunakan untuk menjalankan query string
-
     method :
     ------
 
@@ -28,12 +25,12 @@ class connectionToDataBase():
 
     changeDatabaseUsed(dbname, password)
         merubah database yang akan dikerjakan
+    
+    def addNewTable(self, tablename, column)
+        menambahkan tabel baru pada database
 
     addNewData(tablename, data)
         menambahkan data baru ke table tertentu (masih prototype, ada perubahan nanti)
-
-    addNewDataToTable(tablename, data)
-        menambahkan data baru ke table tertentu (fungsi penambah data sebenarnya)
 
     __del__()
         hilangkan semua koneksi ke database serta menghapus semua informasi dari ram
@@ -63,9 +60,9 @@ class connectionToDataBase():
         #menginisiasi koneksi dari parent
         self.host = host
         self.user = user
-        self.cur = self.databaseConnection.makeConnection(
+        self.databaseConnection.makeConnection(
             host=host ,dbname=dbname, user=user, password=password
-            )
+        )
 
     #membuat table baru
     def newDatabase(self, dbname=str):
@@ -94,14 +91,34 @@ class connectionToDataBase():
         password : str
             password dari postgreSQL
         """
-        self.cur = self.databaseConnection.changeDatabase(
+        self.databaseConnection.changeDatabase(
             host=self.host, tablename=dbname, user=self.user, password=password
-            )
+        )
+        
+    def addNewTable(self, tablename=str, column=dict):
+        """
+        menambahkan tabel baru ke dalam database
+
+        Parameter : 
+        ---------
+
+        tablename : str
+            nama dari tabel yang akan dibuat 
+
+        column : dict
+            kolom yang akan dibuat akan menampung \n
+            data apa, keys dan values nya berbentuk string
+            example :
+            {"column1" : "int", "column2" : "varchar(50)", "column3" : "date"}
+        """
+        self.databaseConnection.addNewTableToDatabase(
+            self.cur, tablename=tablename, column=column
+        )
 
     #membuat table baru pada database
     def addNewData(self, tablename=str, data=dict, datasize=int):
         """
-        (prototype) menambah data baru ke table, mungkin ada perubahan kedepannya
+        menambah data baru ke table, mungkin ada perubahan kedepannya
 
         Parameter :
         ---------
@@ -115,57 +132,16 @@ class connectionToDataBase():
         datasize : int
             jumlah dari berapa banyak baris data yang ingin ditambahkan
         """
-        self.addDataToTable(tablename=tablename, data=data, dataSize=datasize)
-
-    #menambahkan data baru ke table
-    def addDataToTable(self, tablename=str, data=dict, dataSize=int):
-        """
-        menambahkan data baru ke table
-
-        Parameter :
-        ---------
-
-        tablename : str
-            nama dari table yang ingin ditambah datanya
-
-        data : dict
-            data yang ingin ditambahkan
-
-        datasize : int
-            jumlah dari data yang ingin ditambahkan
-        """
-
-        #berapa banyak keys pada data
-        keysInData = list(data.keys())
-
-        #iterator pada jumlah keys dari data
-        keySize = range(len(keysInData))
-
-        #querystring data
-        queryString = "INSERT INTO " + tablename + " ("
-
-        #berapa banyak kolom dalam table tersebut, untuk keperluan formating
-        columnVariable = ""
+        result = self.databaseConnection.addDataToTable(
+            tablename=tablename, data=data, dataSize=datasize
+            )
         
-        #tamabahkan kolom yang ingin ditambahkan ke dalam querystring 
-        #dan berapa banyak formatornya
-        for i in keysInData:
-            queryString += i + ", "
-            columnVariable += "%s,"
+        print(result)
 
-        #querystring disatukan dengan formator data
-        queryString = queryString[:-2] + ") VALUES (" + columnVariable[:-1] + ")"
-
-        #parsing semua data yang akan dimasukkan ke table
-        for rows in range(dataSize):
-            dataForTable = tuple([data[keysInData[columns]][rows] for columns in keySize])
-
-            #eksekusi query penambah data ke cursor
-            try:
-                self.cur.execute(queryString, dataForTable)
-            except:
-                print("data cant be added")
-
+    #ubah data yang sudah diambil dari database menjadi dict
+    def retrieveAllData(self):
+        return None
+    
     #destructor
     def __del__(self):
         self.databaseConnection.terminate(self.cur)
