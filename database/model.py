@@ -30,7 +30,13 @@ class connectionToDataBase():
         menambahkan tabel baru pada database
 
     addNewData(tablename, data)
-        menambahkan data baru ke table tertentu (masih prototype, ada perubahan nanti)
+        menambahkan data baru ke table tertentu 
+    
+    retrieveAllData(tablename, column)
+        mengambil semua data pada tabel tertentu
+
+    overwriteData(tablename, data, datasize)
+        menghapus data kemudian menambahkan data baru
 
     __del__()
         hilangkan semua koneksi ke database serta menghapus semua informasi dari ram
@@ -112,11 +118,11 @@ class connectionToDataBase():
             {"column1" : "int", "column2" : "varchar(50)", "column3" : "date"}
         """
         self.databaseConnection.addNewTableToDatabase(
-            self.cur, tablename=tablename, column=column
+            tablename=tablename, column=column
         )
 
     #membuat table baru pada database
-    def addNewData(self, tablename=str, data=dict, datasize=int):
+    def addNewData(self, tablename=str, data=dict):
         """
         menambah data baru ke table, mungkin ada perubahan kedepannya
 
@@ -132,21 +138,70 @@ class connectionToDataBase():
         datasize : int
             jumlah dari berapa banyak baris data yang ingin ditambahkan
         """
-        result = self.databaseConnection.addDataToTable(
-            tablename=tablename, data=data, dataSize=datasize
-            )
-        
-        print(result)
+        self.databaseConnection.addDataToTable(
+            tablename=tablename, data=data
+        )
 
     #ubah data yang sudah diambil dari database menjadi dict
-    def retrieveAllData(self):
-        return None
-    
+    def retrieveAllData(self, tablename=str, column=[]):
+        """
+        mengambil semua data yang ada pada database
+
+        Parameter :
+        ---------
+
+        tablename : str
+            nama dari tabel yang ingin diambil datanya
+
+        column : list
+            optional : nama dari kolom pada setiap data\n
+            jika tidak ada, maka hanya akan diberikan list tuple dari data
+
+        :return : list(tuple) | dict
+            mengembalikan list dari list(tuple) jika parameter column kosong\n
+            mengembalikan dict jika parameter column berisi
+        """
+        if(not any(column)):
+            return self.databaseConnection.retrieveAllDataFromDatabase(
+                tablename=tablename
+            )
+        else:
+            result = {column[i] : [] for i in range(len(column))}
+            resultKeys = list(result.keys())
+            retrievedData = self.databaseConnection.retrieveAllDataFromDatabase(
+                tablename=tablename
+            )
+
+            for data in retrievedData:
+                for index in range(len(resultKeys)):
+                    result[resultKeys[index]].append(data[index])
+
+            return result
+
+    def overwriteData(self, tablename=str, data=dict):
+        """
+        menghapus ulang data dan memperbaruinya dengan data baru
+
+        Parameter :
+        ---------
+
+        tablename : str
+            nama dari table yang akan dimasukkan ulang datanya
+
+        data : dict
+            data yang ingin dimasukkan ke database
+
+        datasize : int
+            besar data yang ingin dimasukkan ke database
+        """
+        self.databaseConnection.overwriteDataFromDatabase(
+            tablename=tablename, data=data
+        )
+
     #destructor
     def __del__(self):
-        self.databaseConnection.terminate(self.cur)
+        self.databaseConnection.terminate()
         del self.databaseConnection
         self.host = None
         self.user = None
-        self.cur = None
         self.databaseConnection = None

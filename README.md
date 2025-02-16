@@ -21,3 +21,8 @@ because i made (kinda) huge change
 
 changelog 2 :
 another minor mistake, so now i update the method i used
+
+changelog 3 :
+the project is basically complete, with many change and struggle, i hope anyone who use this
+code in the future can understand or even upgrade it (because i didnt even sure anyone 
+can read this spaghetti code)

@@ -1,6 +1,5 @@
 #import psycopg2
 import psycopg2
-from itertools import chain
 
 class dbConnection:
     """
@@ -33,6 +32,9 @@ class dbConnection:
 
     retrieveAllData(self, tablename)
         mengambil semua data pada database tertentu
+
+    overwriteDataFromDatabase(tablename, data)
+        menghapus semua data dan memperbarui data di database
     
     terminate()
         mematikan koneksi ke database postgreSQL
@@ -60,7 +62,7 @@ class dbConnection:
         try:
             #membuat koneksi ke database
             self.conn = psycopg2.connect(
-                "host=%s dbname=%s user=%s password=%s" % (host, dbname, user, password)
+                """host=%s dbname=%s user=%s password=%s""" % (host, dbname, user, password)
                 )
             self.cur = self.conn.cursor()
             #perubahan langsung disimpan ke database tanpa harus commit
@@ -83,7 +85,7 @@ class dbConnection:
         """
         #membuat database baru
         try:
-            self.cur.execute("CREATE DATABASE %s" % dbname)
+            self.cur.execute("""CREATE DATABASE %s""" % dbname)
         except psycopg2.Error as error:
             print(error)
 
@@ -115,7 +117,7 @@ class dbConnection:
         try:
             #membuat koneksi ulang ke database
             self.conn = psycopg2.connect(
-                "host=%s dbname=%s user=%s password=%s" 
+                """host=%s dbname=%s user=%s password=%s""" 
                 % (host, dbname, user, password)
                 )
         except psycopg2.Error as error:
@@ -150,29 +152,24 @@ class dbConnection:
         keysInDict = list(column.keys())
         valuesInDict = list(column.values())
 
-        query = tuple(chain(*[
-            [[keysInDict[i], valuesInDict[i]] for i in range(len(keysInDict))]
-        ])
-        )
-
         #jika table bisa dibuat, query ini tidak akan dijalankan
         try:
             self.cur.execute(
-                "CREATE TABLE IF NOT EXISTS %s" % (tablename) + " (" + 
-                "".join(
-                    ["%s %s," for _ in range(len(column))])[:-1] % 
-                    query
-                + ");"
+                """CREATE TABLE IF NOT EXISTS %s""" % (tablename) + """ (""" + 
+                """,""".join(
+                    ["""%s %s""" % 
+                    tuple([key, value]) for (key, value) in zip(keysInDict, valuesInDict)])
+                + """);"""
                 )
         except psycopg2.Error as error:
-            print("tabel sudah ada pada database")
+            print("terjadi error")
             print(error)
             return None
         
         return "tabel berhasil dibuat"
 
     #menambahkan data baru ke table
-    def addDataToTable(self, tablename=str, data=dict, dataSize=int):
+    def addDataToTable(self, tablename=str, data=dict):
         """
         menambahkan data baru ke table
 
@@ -188,13 +185,6 @@ class dbConnection:
             {"column1" : {0 : 1, 1 : 2, 2 : 3}, "column2" : {0 : 4, 1 : 5, 2 : 6}}
             or
             {"column1" : [0 : 1, 1 : 2, 2 : 3], "column2" : [0 : 4, 1 : 5, 2 : 6]}
-
-        datasize : int
-            jumlah dari data yang ingin ditambahkan
-        
-        :return: str 
-            report apakah data berhasil ditambahkan atau digagalkan karena \n
-            format data yang salah
         """
 
         #berapa banyak keys pada data
@@ -205,44 +195,45 @@ class dbConnection:
         #membuat format string untuk mencegah terjadinya sql injection
         #menggabungkan list comprehension dan str.join untuk membuat query
         queryString = (
-            "INSERT INTO %s (" % tablename + 
+            """INSERT INTO %s (""" % tablename + 
             (
-                "".join(["%s," for _ in range(len(keysInData))])[:-1] % 
+                """,""".join(["""%s""" for _ in range(len(keysInData))]) % 
                 tuple(keysInData)
-            ) + ") VALUES ("
+            ) + """) VALUES """
         )
 
-        if(isinstance(dict, [type(i) for i in keysInData])):
+        try:
             #index jika data didalam kolom semua berbentuk dict
             keySize = list(data[keysInData[0]].keys())
-        elif(isinstance(list, [type(i) for i in keysInData])):
+        except AttributeError:
             #iterator pada jumlah keys dari data 
             keySize = range(len(keysInData))
-        else:
-            print("data format isn't same, some have index some doesnt")
+        except:
+            print("you submited wrong format")
             return None
 
         #cur.mogrify() untuk memasukkan banyak value dalam satu query
-        temp = (
-            "".join(["%s," for _ in range(len(keysInData))])[:-1]
-        ) + ");"
+        temp = ( """(""" +
+            """,""".join(["%s" for _ in range(len(keysInData))])
+        ) + """)"""
         dataInList = [
-            tuple([data[keysInData[columns][rows]]] for columns in keySize) 
-            for rows in range(dataSize)
+            tuple([data[columns][rows] for columns in keysInData])
+            for rows in keySize
             ]
 
+
         #parsing semua data yang akan dimasukkan ke table
-        argqs = ",".join(self.cur.mogrify(temp, x) for x in dataInList)
+        argqs = """,""".join(self.cur.mogrify(temp, x).decode("utf-8") for x in dataInList)
 
         #eksekusi query penambah data ke cursor
         try:
-            self.cur.execute(queryString + argqs)
+            self.cur.execute(queryString + argqs + """;""")
+            print("data's is succesfully added")
         except psycopg2.Error as error:
             print("data can't be added")
-        
-        print("data's is succesfully added")
+            print(error)
 
-    def retrieveAllData(self, tablename=str):
+    def retrieveAllDataFromDatabase(self, tablename=str):
         """
         mengambil semua data pada database tertentu
 
@@ -257,7 +248,7 @@ class dbConnection:
         result = None
         try :
             self.cur.execute(
-                "SELECT * FROM %s;" % tablename
+                """SELECT * FROM %s;""" % tablename
             )
             result = self.cur.fetchall()
         except psycopg2.Error as error:
@@ -266,7 +257,30 @@ class dbConnection:
         
         return result
         
-        
+    def overwriteDataFromDatabase(self, tablename=str, data=dict):
+        """
+        menghapus semua data dari database, lalu memasukkannya kembali
+
+        Parameter :
+        ---------
+
+        tablename : str
+            nama dari tabel yang ingin diubah datanya
+
+        data : dict
+            data yang akan dimasukkan ke tabel
+
+        datasize : int
+            jumlah dari data yang akan dimasukkan ke database
+        """
+        query = """DELETE FROM %s""" % tablename
+        try:
+            self.cur.execute(query=query)
+            self.addDataToTable(tablename=tablename, data=data)
+        except psycopg2.Error as error:
+            print("terjadi error saat memperbarui data")
+            print(error)
+
     #ketika object dihapus, hapus koneksi menuju database
     def terminate(self):
         """
